@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Деталі замовлення</title>
+    <meta charset="UTF-8"/>
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<div id="app-container">
+    <div class="body-wrapper">
+        <div th:insert="~{blocks/header :: header}"></div>
+        <main>
+            <div class="container mt-5">
+                <h1 class="text-center">Деталі замовлення</h1>
+                <div class="card p-4 mt-4">
+                    <form th:action="@{/cart/payment}" method="post">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">Ім'я</label>
+                            <input type="text" class="form-control" id="firstName" name="firstName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Прізвище</label>
+                            <input type="text" class="form-control" id="lastName" name="lastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Країна</label>
+                            <select class="form-control" id="country" name="country" onchange="updateCities(this.value)"
+                                    required>
+                                <option value="" selected disabled>Виберіть країну</option>
+                                <option th:each="country : ${countries.data}" th:value="${country.country}"
+                                        th:text="${country.country}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="city" class="form-label">Місто</label>
+                            <select class="form-control" id="city" name="city" required>
+                                <option value="" selected disabled>Виберіть місто</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deliveryType" class="form-label">Виберіть тип доставки:</label>
+                            <select class="form-control" id="deliveryType" onchange="toggleDeliveryFields()"
+                                    name="deliveryType" required>
+                                <option value="" selected disabled>Виберіть тип доставки</option>
+                                <option value="novaposhta">Нова пошта</option>
+                                <option value="meest">Meest Express</option>
+                            </select>
+                        </div>
+                        <div id="novaposhtaFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="novaposhtaWarehouse" class="form-label">Введіть відділення Нової
+                                    пошти</label>
+                                <input type="text" class="form-control" id="novaposhtaWarehouse"
+                                       name="novaposhtaWarehouse">
+                            </div>
+                        </div>
+                        <div id="meestFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="meestWarehouse" class="form-label">Введіть відділення Meest Express</label>
+                                <input type="text" class="form-control" id="meestWarehouse" name="meestWarehouse">
+                            </div>
+                        </div>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-success">Оплатити</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+        <div th:insert="~{blocks/footer :: footer}"></div>
+    </div>
+</div>
+<script th:inline="javascript">
+    function updateCities(country) {
+        const citySelect = document.getElementById('city');
+        citySelect.innerHTML = '<option value="" selected disabled>Виберіть місто</option>';
+        if (country) {
+             fetch(`/profile/cities?country=${country}`)
+                  .then(response => response.json())
+                   .then(cities => {
+                        cities.forEach(city => {
+                           const option = document.createElement('option');
+                            option.value = city;
+                           option.text = city;
+                           citySelect.appendChild(option);
+                    });
+               })
+       }
+  }
+   function toggleDeliveryFields(){
+        const deliveryType = document.getElementById('deliveryType').value;
+       const novaposhtaFields = document.getElementById('novaposhtaFields');
+       const meestFields = document.getElementById('meestFields');
+        novaposhtaFields.style.display = 'none';
+       meestFields.style.display = 'none';
+        if (deliveryType === 'novaposhta') {
+          novaposhtaFields.style.display = 'block';
+        } else if (deliveryType === 'meest') {
+             meestFields.style.display = 'block';
+      }
+  }
+     fetch('/profile/countries')
+            .then(response => response.json())
+           .then(countries => {
+                 const countrySelect = document.getElementById('country');
+                countries.data.forEach(country => {
+                     const option = document.createElement('option');
+                    option.value = country.country;
+                    option.text = country.country;
+                   countrySelect.appendChild(option);
+              });
+          })
+</script>
+</body>
+</html>

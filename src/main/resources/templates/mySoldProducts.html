@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Мої продані товари</title>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+    <!-- Вбудовані стилі для проданих карток -->
+    <style>
+        .product-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            border: 1px solid #adb5bd;
+            opacity: 0.75; /* Трохи більша прозорість */
+            border-radius: 0.375rem;
+            background-color: #fff;
+        }
+        .product-card img { max-width: 100%; height: 180px; object-fit: contain; } /* Менша висота фото */
+        .card-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .card-text.price { font-weight: bold; font-size: 1rem; color: #6c757d; margin-bottom: 0.5rem; }
+        .sold-details { margin-top: auto; padding-top: 0.5rem; border-top: 1px solid #eee; font-size: 0.8rem; color: #495057; }
+        .sold-details p { margin-bottom: 0.2rem; }
+        .sold-details i { color: #6c757d; width: 1em; margin-right: 0.3rem; }
+        .sold-badge { position: absolute; top: 0.5rem; left: 0.5rem; z-index: 10; }
+    </style>
+</head>
+<body>
+<div id="app-container">
+    <div class="body-wrapper">
+        <div th:insert="~{blocks/header :: header}"></div>
+        <main>
+            <div class="container mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="text-center mb-0">Мої продані товари</h1>
+                    <a th:href="@{/product/my}" class="btn btn-secondary">
+                        <i class="fas fa-store"></i> Активні товари
+                    </a>
+                </div>
+                <hr>
+                <div th:if="${#lists.isEmpty(products)}" class="alert alert-info mt-4" role="alert">
+                    У вас ще немає проданих товарів.
+                </div>
+
+                <div th:if="${not #lists.isEmpty(products)}" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                    <!-- Цикл по товарах -->
+                    <div th:each="prod : ${products}" class="col">
+                        <div class="sold-product-wrapper" style="position: relative; height: 100%;">
+                            <!-- Картка проданого товару -->
+                            <div class="card product-card h-100 shadow-sm">
+                                <!-- Зображення -->
+                                <div class="product-card-img-container" style="height: 180px;">
+                                    <img th:if="${prod.base64Images != null && !prod.base64Images.isEmpty()}"
+                                         th:src="'data:image/jpeg;base64,' + ${prod.base64Images[0]}"
+                                         class="product-card-img" alt="Product Image">
+                                    <img th:unless="${prod.base64Images != null && !prod.base64Images.isEmpty()}"
+                                         th:src="@{/img/default.png}"
+                                         class="product-card-img placeholder" alt="Зображення недоступне">
+                                </div>
+                                <!-- Тіло картки -->
+                                <div class="card-body">
+                                    <h5 class="card-title" th:text="${prod.product.name}">Назва товару</h5>
+                                    <p class="card-text price"
+                                       th:text="'Продано за: $' + ${#numbers.formatDecimal(prod.product.price, 1, 'POINT', 2, 'COMMA')}">
+                                        $0.00
+                                    </p>
+                                    <!-- Деталі Замовлення -->
+                                    <div class="sold-details">
+                                        <p th:if="${prod.orderDate}"><i class="fas fa-calendar-alt"></i> <strong class="me-1">Дата:</strong> <span th:text="${#temporals.format(prod.orderDate, 'dd.MM.yyyy HH:mm')}"></span></p>
+                                        <p th:if="${prod.buyerFirstName}"><i class="fas fa-user"></i> <strong class="me-1">Покупець:</strong> <span th:text="${prod.buyerFirstName + ' ' + prod.buyerLastName}"></span></p>
+                                        <p th:if="${prod.buyerPhone}"><i class="fas fa-phone"></i> <strong class="me-1">Телефон:</strong> <span th:text="${prod.buyerPhone}"></span></p>
+                                        <p th:if="${prod.shippingAddress}"><i class="fas fa-shipping-fast"></i> <strong class="me-1">Доставка:</strong> <span th:text="${prod.shippingAddress}"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Мітка "Продано" -->
+                            <span class="badge bg-secondary sold-badge">Продано</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <div th:insert="~{blocks/footer :: footer}"></div>
+    </div>
+</div>
+</body>
+</html>
