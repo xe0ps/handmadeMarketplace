@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.ServletException;
-
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
