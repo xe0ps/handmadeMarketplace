@@ -22,23 +22,41 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-
+/**
+ * Компонент для ініціалізації початкових даних у базі даних.
+ * Виконує завантаження зображень для категорій та створення категорій і адміністратора під час запуску додатка.
+ */
 @Component
 public class DataInitializer {
 
+    /** Репозиторій для роботи з категоріями. */
     @Autowired
     private CategoryRepo categoryRepo;
 
+    /** Репозиторій для роботи із зображеннями. */
     @Autowired
     private ImageRepo imageRepo;
+
+    /** Репозиторій для роботи з користувачами. */
     @Autowired
     private UserRepo userRepo;
+
+    /** Сервіс для роботи з користувачами, зокрема для створення адміністратора. */
     @Autowired
     private UserService userService;
 
+    /**
+     * Ініціалізує початкові дані після створення біна.
+     * Завантажує зображення для категорій, створює категорії та адміністратора, якщо вони ще не існують у базі даних.
+     *
+     * @throws IOException У разі помилки під час читання файлів зображень.
+     * @throws URISyntaxException У разі помилки під час обробки URI ресурсів.
+     */
     @PostConstruct
     public void initializeData() throws IOException, URISyntaxException {
+        // Ініціалізація категорій, якщо вони ще не створені
         if (categoryRepo.count() == 0) {
+            // Завантаження зображень для категорій із ресурсів
             URI uri1 = Objects.requireNonNull(getClass().getClassLoader().getResource("images/cat1.jpg")).toURI();
             Path path1 = Paths.get(uri1);
             byte[] image1Bytes = Files.readAllBytes(path1);
@@ -79,6 +97,7 @@ public class DataInitializer {
             Path path10 = Paths.get(uri10);
             byte[] image10Bytes = Files.readAllBytes(path10);
 
+            // Збереження зображень у базі даних
             Image image1 = imageRepo.save(new Image(null, "cat1.jpg", "image/jpeg", image1Bytes));
             Image image2 = imageRepo.save(new Image(null, "cat2.jpg", "image/jpeg", image2Bytes));
             Image image3 = imageRepo.save(new Image(null, "cat3.jpg", "image/jpeg", image3Bytes));
@@ -90,7 +109,7 @@ public class DataInitializer {
             Image image9 = imageRepo.save(new Image(null, "cat9.jpg", "image/jpeg", image9Bytes));
             Image image10 = imageRepo.save(new Image(null, "cat10.jpg", "image/jpeg", image10Bytes));
 
-
+            // Створення списку категорій із відповідними зображеннями
             List<Category> categories = Arrays.asList(
                     new Category(null, "В'язаний одяг та ін.", image1),
                     new Category(null, "Шитий одяг і аксесуари", image2),
@@ -103,13 +122,20 @@ public class DataInitializer {
                     new Category(null, "Вишивка", image9),
                     new Category(null, "Плетіння", image10)
             );
+
+            // Збереження всіх категорій у базі даних
             categoryRepo.saveAll(categories);
         }
+
+        // Ініціалізація адміністратора, якщо користувачів ще немає
         if (userRepo.count() == 0) {
+            // Створення об'єкта адміністратора з початковими даними
             User admin = new User();
             admin.setUsername("admin");
             admin.setEmail("admin@gmail.com");
             admin.setPassword("admin");
+
+            // Створення адміністратора через сервіс
             userService.createAdmin(admin);
         }
     }

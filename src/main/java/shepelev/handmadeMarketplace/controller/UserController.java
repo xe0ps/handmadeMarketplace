@@ -22,51 +22,56 @@ import shepelev.handmadeMarketplace.service.ReviewService;
 import java.util.Base64;
 import java.util.List;
 
-@Controller
+@Controller // Контролер обробляє запити користувачів
 public class UserController {
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private ProductService productService;
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private ReviewService reviewService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class); // Логер для ведення журналу подій
 
-    @GetMapping("/user/{userId}")
+    @Autowired
+    private UserService userService; // Сервіс для роботи з користувачами
+
+    @Autowired
+    private ProductService productService; // Сервіс для роботи з продуктами
+
+    @Autowired
+    private OrderService orderService; // Сервіс для роботи із замовленнями
+
+    @Autowired
+    private ReviewService reviewService; // Сервіс для роботи з відгуками
+
+    @GetMapping("/user/{userId}") // Обробка GET-запиту на перегляд профілю користувача
     public String showUserProfile(@PathVariable Long userId, Model model) {
-        User user = userService.getUserById(userId);
+        User user = userService.getUserById(userId); // Отримання користувача за ID
         if (user == null) {
-            return "redirect:/";
+            return "redirect:/"; // Якщо користувач не знайдений — редірект на головну
         }
-        if (user.getProfileImage() != null) {
+        if (user.getProfileImage() != null) { // Якщо є зображення профілю — конвертуємо у base64
             String base64ProfileImage = Base64.getEncoder().encodeToString(user.getProfileImage().getData());
-            model.addAttribute("profileImage", base64ProfileImage);
-            model.addAttribute("fileType", user.getProfileImage().getFileType());
+            model.addAttribute("profileImage", base64ProfileImage); // Передача зображення в модель
+            model.addAttribute("fileType", user.getProfileImage().getFileType()); // Тип файлу
         }
-        List<ProductDto> productDtos = productService.getUserProductDtosById(userId);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        User currentUser = userService.getUserByEmail(currentUsername);
-        boolean canReview = false;
-        if(currentUser != null){
-            canReview =  orderService.canReview(currentUser, userId, productDtos);
+        List<ProductDto> productDtos = productService.getUserProductDtosById(userId); // Отримання продуктів користувача
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication(); // Поточна автентифікація
+        String currentUsername = authentication.getName(); // Отримання імені користувача
+        User currentUser = userService.getUserByEmail(currentUsername); // Поточний авторизований користувач
+        boolean canReview = false; // Флаг можливості залишити відгук
+        if (currentUser != null) {
+            canReview = orderService.canReview(currentUser, userId, productDtos); // Перевірка чи можна залишити відгук
             logger.info("Кінцеве значення canReview для користувача з id {} та продавця з id {}: {}", currentUser.getID(), userId, canReview);
         }
-        model.addAttribute("canReview", canReview);
-        model.addAttribute("user", user);
-        model.addAttribute("products", productDtos);
-        model.addAttribute("reviews", reviewService.getUserReviews(userId));
-        return "userProfile";
+        model.addAttribute("canReview", canReview); // Додавання флагу в модель
+        model.addAttribute("user", user); // Додавання користувача в модель
+        model.addAttribute("products", productDtos); // Додавання продуктів користувача в модель
+        model.addAttribute("reviews", reviewService.getUserReviews(userId)); // Додавання відгуків про користувача
+        return "userProfile"; // Повернення назви представлення профілю
     }
-    @PostMapping("/user/{userId}/addReview")
+
+    @PostMapping("/user/{userId}/addReview") // Обробка POST-запиту на додавання відгуку
     public String addReview(@PathVariable Long userId, @RequestParam("text") String text, RedirectAttributes redirectAttributes) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        reviewService.addReview(userId, currentUsername, text);
-        redirectAttributes.addFlashAttribute("successMessage", "Відгук успішно додано");
-        return "redirect:/user/" + userId;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication(); // Отримання автентифікації
+        String currentUsername = authentication.getName(); // Отримання імені поточного користувача
+        reviewService.addReview(userId, currentUsername, text); // Додавання відгуку
+        redirectAttributes.addFlashAttribute("successMessage", "Відгук успішно додано"); // Повідомлення про успіх
+        return "redirect:/user/" + userId; // Редірект назад на сторінку профілю
     }
 }
